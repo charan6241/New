@@ -1,20 +1,22 @@
-// frontend/src/components/ImageUploader.js
+// frontend/src/components/FileUpload.js
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import './FileUpload.css'; // Import the new CSS file
 
-const ImageUploader = () => {
+const FileUpload = () => {
     const [selectedFile, setSelectedFile] = useState(null);
-    const [previewImage, setPreviewImage] = useState(null);
+    const [preview, setPreview] = useState(null);
     const [predictionData, setPredictionData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('image'); // 'image' or 'video'
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
             setSelectedFile(file);
-            setPreviewImage(URL.createObjectURL(file));
+            setPreview(URL.createObjectURL(file));
             setPredictionData(null);
             setError(null);
         }
@@ -22,7 +24,7 @@ const ImageUploader = () => {
 
     const handleUpload = async () => {
         if (!selectedFile) {
-            setError("Please select an image first.");
+            setError("Please select a file first.");
             return;
         }
 
@@ -32,12 +34,14 @@ const ImageUploader = () => {
 
         const formData = new FormData();
         formData.append("file", selectedFile);
+        
+        // Determine which API endpoint to call based on the active tab
+        const endpoint = activeTab === 'image' ? '/predict-image' : '/predict-video';
+        const API_URL = "http://127.0.0.1:8000" + endpoint;
 
         try {
-            const response = await axios.post("http://127.0.0.1:8000/predict-image", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            const response = await axios.post(API_URL, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
             });
             setPredictionData(response.data);
         } catch (err) {
@@ -47,38 +51,70 @@ const ImageUploader = () => {
             setIsLoading(false);
         }
     };
+    
+    // A helper function to render results consistently for both image and video
+    const renderResults = () => {
+        const data = predictionData.prediction || predictionData.summary;
+        if (!data) return null;
+
+        return (
+            <>
+                <p><strong>Animal Type:</strong> {data.animal_type}</p>
+                <p><strong>Predicted Breed:</strong> {data.breed}</p>
+                <p><strong>Visual Health Status:</strong> {data.health_status}</p>
+                <hr />
+                <h4>Breed Information</h4>
+                <p><strong>Milk Yield:</strong> {predictionData.breed_info.milk_yield}</p>
+                <p><strong>Weight Range:</strong> {predictionData.breed_info.weight_range}</p>
+                <p><i>{predictionData.breed_info.info}</i></p>
+            </>
+        );
+    };
 
     return (
-        <div style={{ maxWidth: '800px', margin: '20px auto', fontFamily: 'Arial, sans-serif', textAlign: 'center' }}>
-            <h2>Bovine Image Analysis</h2>
-            <input type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'block', margin: '20px auto' }} />
+        <div className="upload-container">
+            <div className="tabs">
+                <div className={`tab ${activeTab === 'image' ? 'active' : ''}`} onClick={() => setActiveTab('image')}>
+                    🖼️ Image Analysis
+                </div>
+                <div className={`tab ${activeTab === 'video' ? 'active' : ''}`} onClick={() => setActiveTab('video')}>
+                    🎬 Video Analysis
+                </div>
+            </div>
 
-            <button onClick={handleUpload} disabled={isLoading} style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}>
-                {isLoading ? 'Analyzing...' : 'Analyze Image'}
+            <div className="file-input-area">
+                <p>Select an {activeTab} to analyze</p>
+                <input 
+                    type="file" 
+                    accept={activeTab === 'image' ? "image/*" : "video/*"} 
+                    onChange={handleFileChange} 
+                    className="file-input" 
+                />
+            </div>
+            
+            <button onClick={handleUpload} disabled={isLoading || !selectedFile} className="analyze-button">
+                {isLoading ? 'Analyzing...' : `Analyze ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
             </button>
 
-            {error && <p style={{ color: 'red', marginTop: '20px' }}>{error}</p>}
+            {error && <p className="error-message">{error}</p>}
 
-            <div style={{ marginTop: '30px', display: 'flex', gap: '20px', alignItems: 'flex-start', justifyContent: 'center' }}>
-                {previewImage && (
-                    <div style={{ flex: 1, maxWidth: '350px' }}>
-                        <h3>Image Preview</h3>
-                        <img src={previewImage} alt="Selected Preview" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+            <div className="results-section">
+                {preview && (
+                    <div className="media-preview">
+                        <h3>Preview</h3>
+                        {activeTab === 'image' ? (
+                            <img src={preview} alt="Selected Preview" className="preview-image" />
+                        ) : (
+                            <video src={preview} controls width="100%" />
+                        )}
                     </div>
                 )}
 
                 {isLoading && <p>Loading results...</p>}
                 {predictionData && (
-                    <div style={{ flex: 1, maxWidth: '350px', textAlign: 'left', background: '#f9f9f9', padding: '20px', borderRadius: '8px' }}>
+                    <div className="results-card">
                         <h3>Analysis Results</h3>
-                        <p><strong>Animal Type:</strong> {predictionData.prediction.animal_type}</p>
-                        <p><strong>Predicted Breed:</strong> {predictionData.prediction.breed}</p>
-                        <p><strong>Visual Health Status:</strong> {predictionData.prediction.health_status}</p>
-                        <hr />
-                        <h4>Breed Information</h4>
-                        <p><strong>Milk Yield:</strong> {predictionData.breed_info.milk_yield}</p>
-                        <p><strong>Weight Range:</strong> {predictionData.breed_info.weight_range}</p>
-                        <p><i>{predictionData.breed_info.info}</i></p>
+                        {renderResults()}
                     </div>
                 )}
             </div>
@@ -86,4 +122,4 @@ const ImageUploader = () => {
     );
 };
 
-export default ImageUploader;
+export default FileUpload;
