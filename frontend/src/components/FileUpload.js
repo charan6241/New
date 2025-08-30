@@ -44,7 +44,7 @@ const FileUpload = () => {
         // For the final live website, use your public Render URL, for example:
         // const BASE_URL = "https://cattle-vision-api.onrender.com";
         // ==============================================================================
-        const BASE_URL = "https://cattle-vision-api.onrender.com"; // <-- PASTE YOUR RENDER URL HERE
+        const BASE_URL = "https://new-idsi.onrender.com"; // <-- PASTE YOUR RENDER URL HERE
         
         const API_URL = BASE_URL + endpoint;
 
