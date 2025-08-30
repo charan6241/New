@@ -1,125 +1,124 @@
-// frontend/src/components/FileUpload.js
+/* frontend/src/components/FileUpload.css */
 
-import React, { useState } from 'react';
-import axios from 'axios';
-import './FileUpload.css'; // Import the new CSS file
+.upload-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px Gist;
+  text-align: center;
+}
 
-const FileUpload = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
-    const [preview, setPreview] = useState(null);
-    const [predictionData, setPredictionData] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [activeTab, setActiveTab] = useState('image'); // 'image' or 'video'
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  margin-bottom: 1.5rem;
+}
 
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setSelectedFile(file);
-            setPreview(URL.createObjectURL(file));
-            setPredictionData(null);
-            setError(null);
-        }
-    };
+.tab {
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+}
 
-    const handleUpload = async () => {
-        if (!selectedFile) {
-            setError("Please select a file first.");
-            return;
-        }
+.tab.active {
+  color: #007bff;
+  border-bottom-color: #007bff;
+}
 
-        setIsLoading(true);
-        setError(null);
-        setPredictionData(null);
+.file-input-area {
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  background-color: #f8f9fa;
+}
 
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        
-        // Determine which API endpoint to call based on the active tab
-        const endpoint = activeTab === 'image' ? '/predict-image' : '/predict-video';
-        const API_URL = "http://127.0.0.1:8000" + endpoint;
+.file-input-area p {
+  margin: 0;
+  color: #555;
+}
 
-        try {
-            const response = await axios.post(API_URL, formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-            });
-            setPredictionData(response.data);
-        } catch (err) {
-            console.error("Error uploading file:", err);
-            setError("An error occurred during analysis. Please check the backend server and try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    // A helper function to render results consistently for both image and video
-    const renderResults = () => {
-        const data = predictionData.prediction || predictionData.summary;
-        if (!data) return null;
+.file-input {
+  width: 100%;
+  padding: 1rem;
+}
 
-        return (
-            <>
-                <p><strong>Animal Type:</strong> {data.animal_type}</p>
-                <p><strong>Predicted Breed:</strong> {data.breed}</p>
-                <p><strong>Visual Health Status:</strong> {data.health_status}</p>
-                <hr />
-                <h4>Breed Information</h4>
-                <p><strong>Milk Yield:</strong> {predictionData.breed_info.milk_yield}</p>
-                <p><strong>Weight Range:</strong> {predictionData.breed_info.weight_range}</p>
-                <p><i>{predictionData.breed_info.info}</i></p>
-            </>
-        );
-    };
+.analyze-button {
+  padding: 0.8rem 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: white;
+  background-color: #007bff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
 
-    return (
-        <div className="upload-container">
-            <div className="tabs">
-                <div className={`tab ${activeTab === 'image' ? 'active' : ''}`} onClick={() => setActiveTab('image')}>
-                    🖼️ Image Analysis
-                </div>
-                <div className={`tab ${activeTab === 'video' ? 'active' : ''}`} onClick={() => setActiveTab('video')}>
-                    🎬 Video Analysis
-                </div>
-            </div>
+.analyze-button:hover {
+  background-color: #0056b3;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
 
-            <div className="file-input-area">
-                <p>Select an {activeTab} to analyze</p>
-                <input 
-                    type="file" 
-                    accept={activeTab === 'image' ? "image/*" : "video/*"} 
-                    onChange={handleFileChange} 
-                    className="file-input" 
-                />
-            </div>
-            
-            <button onClick={handleUpload} disabled={isLoading || !selectedFile} className="analyze-button">
-                {isLoading ? 'Analyzing...' : `Analyze ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`}
-            </button>
+.analyze-button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
-            {error && <p className="error-message">{error}</p>}
+.error-message {
+  color: #dc3545;
+  margin-top: 1rem;
+  font-weight: 500;
+}
 
-            <div className="results-section">
-                {preview && (
-                    <div className="media-preview">
-                        <h3>Preview</h3>
-                        {activeTab === 'image' ? (
-                            <img src={preview} alt="Selected Preview" className="preview-image" />
-                        ) : (
-                            <video src={preview} controls width="100%" />
-                        )}
-                    </div>
-                )}
+.results-section {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: left;
+}
 
-                {isLoading && <p>Loading results...</p>}
-                {predictionData && (
-                    <div className="results-card">
-                        <h3>Analysis Results</h3>
-                        {renderResults()}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
+.media-preview, .results-card {
+  flex: 1;
+  min-width: 300px;
+  max-width: 400px;
+}
 
-export default FileUpload;
+.results-card {
+  background: #f9f9f9;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border-left: 5px solid #007bff;
+}
+
+.results-card h3, .results-card h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.results-card hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 1rem 0;
+}
+
+.results-card p {
+  margin: 0.5rem 0;
+  color: #444;
+}
+
+.preview-image {
+  max-width: 100%;
+  border-radius: 8px;
+}
